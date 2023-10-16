@@ -1,0 +1,108 @@
+{
+  "name": "jade-smoke",
+  "version": "1.2.3",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "lint": "vue-cli-service lint",
+    "electron": "electron .",
+    "electron:build": "vue-cli-service build && electron .",
+    "postinstall": "npm run pack-python",
+    "pack-python": "electron-builder --prepackaged src/pythonScript",
+    "vue-build": "vue-cli-service build",
+    "electron-build": "electron-builder",
+    "electron-build-win": "electron-builder --win --x64"
+  },
+  "build": {
+    "appId": "com.starsxu.jadeSmoke",
+    "productName": "瑶烟",
+    "directories": {
+      "output": "dist_electron"
+    },
+    "files": [
+      "dist/**/*",
+      "dist_screenshot/**/*",
+      "App.vue",
+      "main.js",
+      "src/assets/**/*"
+    ],
+    "mac": {
+      "icon": "./src/assets/玉玦-512.png",
+      "category": "public.app-category.utilities",
+      "extraResources": [
+        {
+          "from": "./src/macScript",
+          "to": "script"
+        }
+      ]
+    },
+    "win": {
+      "icon": "./src/assets/玉玦-512.png",
+      "target": [
+        "nsis"
+      ],
+      "extraResources": [
+        {
+          "from": "./src/winScript",
+          "to": "script"
+        }
+      ],
+      "asar": true
+    },
+    "nsis": {
+      "include": "installer.nsh",
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.1.0",
+    "core-js": "^3.8.3",
+    "cropperjs": "^1.5.13",
+    "electron-settings": "^4.0.2",
+    "element-plus": "^2.3.5",
+    "html2canvas": "^1.4.1",
+    "iconv-lite": "^0.6.3",
+    "node-polyfill-webpack-plugin": "^2.0.1",
+    "vue": "^3.2.13",
+    "vue-router": "^4.2.2",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.12.16",
+    "@babel/eslint-parser": "^7.12.16",
+    "@vue/cli-plugin-babel": "~5.0.0",
+    "@vue/cli-plugin-eslint": "~5.0.0",
+    "@vue/cli-service": "~5.0.0",
+    "electron": "^24.4.0",
+    "electron-builder": "^24.4.0",
+    "electron-is-dev": "^2.0.0",
+    "eslint": "^7.32.0",
+    "eslint-plugin-vue": "^8.0.3",
+    "unplugin-auto-import": "^0.16.2",
+    "unplugin-element-plus": "^0.7.1",
+    "unplugin-vue-components": "^0.24.1",
+    "vue-electron": "^1.0.6"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "extends": [
+      "plugin:vue/vue3-essential",
+      "eslint:recommended"
+    ],
+    "parserOptions": {
+      "parser": "@babel/eslint-parser"
+    },
+    "rules": {}
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead",
+    "not ie 11"
+  ]
+}
