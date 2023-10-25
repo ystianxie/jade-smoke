@@ -1,18 +1,18 @@
-const { app, Menu, Tray, globalShortcut, BrowserWindow } = require('electron')
-const { ipcMain, screen } = require('electron')
+const {app, Menu, Tray, globalShortcut, BrowserWindow} = require('electron')
+const {ipcMain} = require('electron')
 const settings = require('electron-settings');
-const { spawn } = require('child_process');
+const {spawn} = require('child_process');
 const iconv = require('iconv-lite');
 const path = require('path');
 const XLSX = require('xlsx');
 
-
 const indexPath = path.join(__dirname, '/dist/index.html')
+const isDevelopment = process.resourcesPath.indexOf("node_modules") !== -1
 
-
+console.log("开发：", isDevelopment)
 app.commandLine.appendSwitch('wm-window-animations-disabled')
 
-let mainWindow
+var mainWindow
 var showShortcutKeys = shortcutKeysFormat(settings.getSync("shortcutKeys") || "");
 var winAutoHide = settings.getSync("winAutoHide");
 var winShowFrame = settings.getSync("winShowFrame");
@@ -24,13 +24,8 @@ if (!showShortcutKeys) {
     }
 }
 
-
-function getSize() {
-    const { size, scaleFactor } = screen.getPrimaryDisplay();
-    const displays = screen.getAllDisplays();
-    console.log(displays);
-    return { width: size.width * scaleFactor, height: size.height * scaleFactor }
-}
+const menu = Menu.buildFromTemplate([]);
+Menu.setApplicationMenu(menu);
 
 function createWindow(window_x, window_y) {
 
@@ -45,6 +40,10 @@ function createWindow(window_x, window_y) {
         height: 700,
         show: true,
         frame: winShowFrame,
+        title: process.platform === "win32" ? "瑶烟" : "",
+        titleBarStyle: "customButtonsOnHover",
+        hasShadow: process.platform !== "darwin",
+        devTools: !isDevelopment,
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
@@ -54,12 +53,11 @@ function createWindow(window_x, window_y) {
     if (window_x && window_x > 0) window_config.x = window_x
     if (window_y && window_y > 0) window_config.y = window_y
     mainWindow = new BrowserWindow(window_config)
-
-    // console.log(winAutoHide, winShowFrame);
-
-    // mainWindow.loadURL('http://10.0.0.236:8080/')
-    // mainWindow.loadFile(indexPath+ "#/screen")
-    mainWindow.loadURL(`file://${indexPath}`)
+    if (isDevelopment) {
+        mainWindow.loadURL('http://localhost:8080/')
+    } else {
+        mainWindow.loadURL(`file://${indexPath}`)
+    }
 
     if (winAutoHide) {
         mainWindow.on('blur', onBlur)
@@ -72,20 +70,21 @@ function createWindow(window_x, window_y) {
             mainWindow = null
         }
     })
-    mainWindow.webContents.on('before-input-event', (event, input) => {
-        if (input.type === "keyDown" && input.key === "F12") {
-            if (mainWindow.webContents.isDevToolsOpened()) {
-                mainWindow.webContents.closeDevTools();
-            } else {
-                mainWindow.webContents.openDevTools();
+    if (isDevelopment) {
+        mainWindow.webContents.on('before-input-event', (event, input) => {
+            if (input.type === "keyDown" && input.key === "F12") {
+                if (mainWindow.webContents.isDevToolsOpened()) {
+                    mainWindow.webContents.closeDevTools();
+                } else {
+                    mainWindow.webContents.openDevTools();
+                }
             }
-        }
 
-    })
-    // console.log("窗口：", !!mainWindow);
+        })
+    }
+
 
 }
-
 
 
 const currentWindow = BrowserWindow.getFocusedWindow()
@@ -116,9 +115,8 @@ ipcMain.on("show_window", (event) => {
 function showMainWindow() {
     if (mainWindow === null) {
         createWindow()
-    };
+    }
     mainWindow.show()
-
 }
 
 
@@ -127,12 +125,12 @@ app.on('ready', () => {
     // 创建一个 Tray 对象，并设置图标路径
     tray = new Tray(path.join(__dirname, '/src/assets/玉玦-16.png'))
     const contextMenu = Menu.buildFromTemplate([
-        { label: '显示', type: 'normal', click: showMainWindow },
-        { type: 'separator' },
-        { label: 'Quit', role: 'quit' }
+        {label: '显示', type: 'normal', click: showMainWindow},
+        {type: 'separator'},
+        {label: '退出', role: 'quit'}
     ])
     tray.setContextMenu(contextMenu)
-    // tray.setToolTip('翻译坤')
+    tray.setToolTip('瑶烟-表格处理')
     tray.on("double-click", showMainWindow)
 
 })
@@ -140,10 +138,7 @@ app.on('ready', () => {
 
 app.whenReady().then(() => {
     createWindow()
-
     globalShortcut.register(showShortcutKeys, showMainWindow)
-
-
 })
 
 
@@ -161,7 +156,6 @@ app.whenReady().then(() => {
 });
 
 
-
 ipcMain.on('parseExcelFileField', (e, args) => {
     // 解析Excel的表头
     console.log('这里是主进程:parseExcelFileField', args)
@@ -174,7 +168,7 @@ ipcMain.on('parseExcelFileField', (e, args) => {
 
         let items = []
         for (let i = range.s.c; i <= range.e.c; i++) {
-            const cellAddress = XLSX.utils.encode_cell({ r: range.s.r, c: i });
+            const cellAddress = XLSX.utils.encode_cell({r: range.s.r, c: i});
             if (worksheet[cellAddress]) {
                 const cellValue = worksheet[cellAddress].v;
                 items.push(cellValue)
@@ -188,7 +182,7 @@ ipcMain.on('parseExcelFileField', (e, args) => {
         }
         e.reply("showExcelFileField", result)
     } catch (error) {
-        e.reply("showExcelFileField", result)
+        e.reply("log", error)
 
     }
 
@@ -203,7 +197,7 @@ ipcMain.on('buildData', (e, args) => {
 
         pythonProcess = spawn(path.join(process.resourcesPath, 'script/buildData'), [JSON.stringify(args),]);
     } else if (process.platform === 'win32') {
-        pythonProcess = spawn(path.join(process.resourcesPath, 'script/buildData.exe'), [JSON.stringify(args),], { encoding: 'utf-8' });
+        pythonProcess = spawn(path.join(process.resourcesPath, 'script/buildData.exe'), [JSON.stringify(args),], {encoding: 'utf-8'});
     }
 
     pythonProcess.stdout.on('data', (data) => {
@@ -218,7 +212,7 @@ ipcMain.on('buildData', (e, args) => {
             file_path: data
         }
         e.reply("buildResult", result)
-        mainWindow.webContents.send("buildLog", { level: "success", info: "生成: " + data });
+        mainWindow.webContents.send("buildLog", {level: "success", info: "生成: " + data});
 
     });
 
@@ -230,8 +224,8 @@ ipcMain.on('buildData', (e, args) => {
         }
 
         console.error(`stderr: ${data}`);
-        e.reply("buildResult", { "msg": data })
-        mainWindow.webContents.send("buildLog", { level: "error", info: data });
+        e.reply("buildResult", {"msg": data})
+        mainWindow.webContents.send("buildLog", {level: "error", info: data});
 
     });
 
@@ -271,7 +265,7 @@ ipcMain.on("getSettingInfo", async (e, args) => {
     showShortcutKeys = shortcutKeysFormat(shortcutKeys)
 
 
-    e.reply("SettingInfo", { "winAutoHide": winAutoHide, "winShowFrame": winShowFrame, "shortcutKeys": shortcutKeys });
+    e.reply("SettingInfo", {"winAutoHide": winAutoHide, "winShowFrame": winShowFrame, "shortcutKeys": shortcutKeys});
 
 })
 
@@ -298,15 +292,12 @@ function shortcutKeysFormat(shortcutKeys) {
 }
 
 
-
-
 app.on('window-all-closed', function () {
     // if (process.platform !== 'darwin') app.quit()
 })
 // app.on('activate', function () {
 // if (mainWindow === null) createWindow()
 // })
-
 
 
 function onBlur() {

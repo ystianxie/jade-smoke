@@ -1,24 +1,5 @@
-# jade-smoke
+# 瑶烟
 
-## Project setup
-```
-npm install
-```
-
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
-
-### Compiles and minifies for production
-```
-npm run build
-```
-
-### Lints and fixes files
-```
-npm run lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+![文档合并](merge.png)
+![字段追加](append.png)
+![联合去重](removeDuplicates.png)

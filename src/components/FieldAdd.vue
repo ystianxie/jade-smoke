@@ -6,11 +6,13 @@
           <div style="display: flex; ">
             <label style="margin-top: 5px;">主表：</label>
             <el-upload drag ref="upload_master" action="#" :on-change="onMasterTableChange" :limit="1"
-              :on-exceed="handleExceed" :auto-upload="false" :before-remove="onMasterTableRemove"
-              :accept="'application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'">
+                       :on-exceed="handleExceed" :auto-upload="false" :before-remove="onMasterTableRemove"
+                       :accept="'application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'">
 
               <template #trigger>
-                <el-icon class="el-icon--upload" style="width: 40px;height: 40px;"><upload-filled /></el-icon>
+                <el-icon class="el-icon--upload" style="width: 40px;height: 40px;">
+                  <upload-filled/>
+                </el-icon>
 
               </template>
 
@@ -28,8 +30,9 @@
                   <label>输出字段选择</label>
                   <el-checkbox-group v-model="masterValues.export_headers">
                     <el-checkbox-button style="padding: 2px;"
-                      v-for="(header, index) in masterValues.excel_headers.filter(ele => ele)" :key="index"
-                      :label="header" :checked="true" />
+                                        v-for="(header, index) in masterValues.excel_headers.filter(ele => ele)"
+                                        :key="index"
+                                        :label="header" :checked="true"/>
                   </el-checkbox-group>
                 </div>
 
@@ -47,7 +50,7 @@
                   <el-form-item label="主表键" label-width="140px">
                     <el-select v-model="masterValues.onlyKey" placeholder="匹配键">
                       <el-option v-for="(header, index) in masterValues.excel_headers.filter(ele => ele)" :key="index"
-                        :label="header" :value="header" />
+                                 :label="header" :value="header"/>
                     </el-select>
                   </el-form-item>
                 </el-form>
@@ -65,17 +68,19 @@
           <div style="display: flex;  margin: 10px 20px 0 0px;">
             <label style="margin-top: 5px;">副表：</label>
             <el-upload drag v-model:file-list="slaveFiles" ref="upload_slave" class="upload-demo" action="#"
-              :on-change="onSlaveTableChange" :auto-upload="false" :before-remove="onSlaveTableRemove"
-              :accept="'application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'">
+                       :on-change="onSlaveTableChange" :auto-upload="false" :before-remove="onSlaveTableRemove"
+                       :accept="'application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'">
               <template #trigger>
                 <div>
                   <!-- <el-button style="margin-top: 2px;" class="ml-3" type="success">上传</el-button> -->
-                  <el-icon class="el-icon--upload" style="width: 40px;height: 40px;"><upload-filled /></el-icon>
+                  <el-icon class="el-icon--upload" style="width: 40px;height: 40px;">
+                    <upload-filled/>
+                  </el-icon>
 
                 </div>
               </template>
               <el-button type="primary" style="width: 120px; margin-top: 10px;"
-                @click="slaveMatchDialogFormVisible = true">
+                         @click="slaveMatchDialogFormVisible = true">
                 匹配键
               </el-button>
               <el-button type="info" style="width: 120px; margin-top: 10px;" @click="slaveDialogFormVisible = true">
@@ -86,9 +91,9 @@
                 <el-form :model="slaveValues">
 
                   <el-form-item v-for="(slave_table, file) in slaveValues.excel_headers" :key="file"
-                    :label="getFileName(file)" label-width="200px">
+                                :label="getFileName(file)" label-width="200px">
                     <el-select v-model="slaveValues.onlyKeys[file]" placeholder="匹配键">
-                      <el-option v-for="(header, index) in slave_table" :key="index" :label="header" :value="header" />
+                      <el-option v-for="(header, index) in slave_table" :key="index" :label="header" :value="header"/>
                     </el-select>
                   </el-form-item>
                 </el-form>
@@ -102,16 +107,38 @@
               </el-dialog>
 
               <el-dialog v-model="slaveDialogFormVisible" title="选择需要追加的键">
-                <div style="margin-bottom: 30px; display: flex; flex-direction: column; align-items:center;">
-                  <span>{{ sliderTag }}</span>
-                  <el-slider v-model="sliderValue" :marks="sliderMarks" show-stops :min="1" :max="3" />
-                </div>
+                <div style="margin-bottom: 15px; display: flex; flex-direction: row; align-items:center;">
+                  <div style="margin-right: 50px">
+                    <span>重复字段处理</span>
+                    <el-slider v-model="duplicateFieldsValue" :marks="duplicateFieldsMarks" show-stops :min="1"
+                               :max="3"/>
+                  </div>
+                  <div style="margin-right: 50px">
+                    <span>重复内容处理</span>
+                    <el-slider v-model="duplicateContentValue" :marks="duplicateContentMarks" show-stops :min="1"
+                               :max="3"/>
+                  </div>
+                  <div>
+                    <div style="padding-top: 5px">
+                      <span style="padding-right: 10px;" @mouseover="setMergeSeparator('合并值分隔符')" @mouseout="setMergeSeparator('值分隔符...')">{{
+                          mergeSeparatorTitle
+                        }}</span>
+                      <el-input v-model="mergeSeparator" style="width: 40px"/>
+                    </div>
+                    <div>
+                      <span style="padding-right: 10px;" @mouseover="setStripSpaceTitle('忽略首尾空格')" @mouseout="setStripSpaceTitle('忽略空格...')">{{
+                          stripSpaceTitle
+                        }}</span>
+                      <el-switch v-model="stripSpace"/>
+                    </div>
+                  </div>
 
+                </div>
                 <div v-for="(slave_table, index) in slaveValues.excel_headers" :key="index">
                   <label>副表：{{ index }}</label>
                   <el-checkbox-group v-model="slaveValues.export_headers[index]">
                     <el-checkbox-button style="padding: 2px;" v-for="(header, key) in slave_table" :key="key"
-                      :label="header" />
+                                        :label="header"/>
                   </el-checkbox-group>
                 </div>
 
@@ -130,18 +157,18 @@
         <div style="margin-left: 50px; right: 20px;">
           <el-button type="success" style="width: 250px; margin-top: 15px;" @click="build">生成</el-button>
           <el-progress v-show="buildInfo.buildShow" style="width: 280px;" :percentage="buildInfo.buildProgress"
-            :status="buildInfo.buildStatus" />
+                       :status="buildInfo.buildStatus"/>
         </div>
       </div>
     </div>
   </div>
 </template>
-  
+
 <script>
 
 
-import { genFileId } from 'element-plus';
-import { reactive } from 'vue';
+import {genFileId} from 'element-plus';
+import {reactive} from 'vue';
 
 function isObjectEmpty(obj) {
   return Object.keys(obj).length === 0;
@@ -150,6 +177,8 @@ function isObjectEmpty(obj) {
 export default {
   data() {
     return {
+      mergeSeparatorTitle:"值分隔符...",
+      stripSpaceTitle:"忽略空格...",
       masterFile: null,
       slaveFiles: [],
       masterDialogFormVisible: false,
@@ -171,16 +200,29 @@ export default {
         buildStatus: "",
         buildProgress: 0
       },
-      sliderTag: "重复字段处理",
-      sliderValue: 1,
-      sliderMarks: reactive({
+      duplicateFieldsValue: 1,
+      duplicateFieldsMarks: reactive({
         1: "填充",
         2: "覆盖",
         3: "新增"
-      })
+      }),
+      duplicateContentValue: 1,
+      duplicateContentMarks: reactive({
+        1: "最旧",
+        2: "最新",
+        3: "合并"
+      }),
+      mergeSeparator: ",",
+      stripSpace: true
     };
   },
   methods: {
+    setMergeSeparator(value){
+      this.mergeSeparatorTitle = value
+    },
+    setStripSpaceTitle(value){
+      this.stripSpaceTitle = value
+    },
     getFileName(val) {
       val = val.replace(/\\/g, "/");
       return val.split('/')[val.split('/').length - 1]
@@ -304,7 +346,10 @@ export default {
         "slave": Object.values(this.slaveFiles).map(slave => slave.raw.path),
         "slave_key": JSON.parse(JSON.stringify(this.slaveValues.onlyKeys)),
         "slave_add_key": JSON.parse(JSON.stringify(this.slaveValues.export_headers)),
-        "repeat_operation": this.sliderValue
+        "duplicate_fields_operation": this.duplicateFieldsValue,
+        "duplicate_content_operation": this.duplicateContentValue,
+        "merge_separator": this.mergeSeparator,
+        "strip_space": this.stripSpace,
       }
       console.log(export_data);
       window.ipcRenderer.send('buildData', export_data)
@@ -326,7 +371,7 @@ export default {
 };
 // window.ipcRenderer = window.require('electron').ipcRenderer
 </script>
-  
+
 <style scoped>
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
@@ -384,6 +429,12 @@ export default {
 
 ::v-deep .el-upload-list {
   width: 250px;
+}
+
+.hoverable-div:hover,
+.hovered {
+  /* 添加自定义样式 */
+  display: block;
 }
 </style>
   

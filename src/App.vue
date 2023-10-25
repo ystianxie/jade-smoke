@@ -1,15 +1,16 @@
 <template>
+  <div style="height: 40px;width: auto;-webkit-app-region: drag;"></div>
   <div>
-    <router-view />
+    <router-view/>
     <el-tabs tab-position="left" style="height: 400px" class="demo-tabs" @tab-click="judgmentSystem">
       <el-tab-pane label="文档合并">
-        <MergeTables />
+        <MergeTables/>
       </el-tab-pane>
       <el-tab-pane label="字段追加">
-        <FieldAdd />
+        <FieldAdd/>
       </el-tab-pane>
       <el-tab-pane label="联合去重">
-        <JointDeduplication />
+        <JointDeduplication/>
       </el-tab-pane>
       <el-tab-pane label="设置" name="设置">
         <div class="container" style="display: flex; justify-content: center;">
@@ -19,7 +20,7 @@
               <h3 style="margin-right: 20px;">自动隐藏: </h3>
               <div style="display: flex; align-items: center;">
                 <el-switch v-model="winAutoHide" class="ml-2" @change="changeSettingAutoHide"
-                  style="--el-switch-on-color: #13ce66; " />
+                           style="--el-switch-on-color: #13ce66; "/>
               </div>
             </div>
 
@@ -27,7 +28,7 @@
               <h3 style="margin-right: 20px;">显示边框: </h3>
               <div style="display: flex; align-items: center;">
                 <el-switch v-model="winShowFrame" class="ml-2" @change="changeSettingShowFrame"
-                  style="--el-switch-on-color: #13ce66; " />
+                           style="--el-switch-on-color: #13ce66; " :disabled="winShowFrameDisabled"/>
               </div>
             </div>
 
@@ -35,7 +36,7 @@
               <h3 style="margin-right: 20px;">呼出快捷键[{{ systemType }}]:</h3>
               <div style="display: flex; align-items: center;">
                 <el-input v-model="showKeyValue" ref="showKey" placeholder="请输入" @keydown="handleShortcut"
-                  @input="showKeyInput" @blur="confirmShowKey"></el-input>
+                          @input="showKeyInput" @blur="confirmShowKey"></el-input>
               </div>
             </div>
           </div>
@@ -46,14 +47,16 @@
     </el-tabs>
   </div>
   <el-divider>
-    <el-icon><star-filled /></el-icon>
+    <el-icon>
+      <star-filled/>
+    </el-icon>
   </el-divider>
 
 
   <div class="logFrame">
     <el-scrollbar max-height="150px" wrap-class="logFrame">
       <div v-for="log in logs" :key="log.id">
-        <el-alert :title="log.info" :type="log.level" show-icon />
+        <el-alert :title="log.info" :type="log.level" show-icon/>
       </div>
 
     </el-scrollbar>
@@ -61,7 +64,6 @@
 </template>
 
 <script>
-
 
 
 import FieldAdd from './components/FieldAdd.vue'
@@ -80,7 +82,8 @@ export default {
       logIndex: 1,
       logs: [],
       winAutoHide: true,
-      winShowFrame: false
+      winShowFrame: false,
+      winShowFrameDisabled: false
     };
   },
   components: {
@@ -165,18 +168,21 @@ export default {
         this.showKeyValue = this.showKeyValueOld
         return
       }
-      window.ipcRenderer.send("saveShortcutKeys", { shortcutKeys: this.showKeyValue, platform: this.systemType })
+      window.ipcRenderer.send("saveShortcutKeys", {shortcutKeys: this.showKeyValue, platform: this.systemType})
     },
     changeSettingAutoHide() {
       window.ipcRenderer.send("changeSettingAutoHide", this.winAutoHide)
     },
     changeSettingShowFrame() {
       window.ipcRenderer.send("changeSettingShowFrame", this.winShowFrame)
-
     }
 
   },
   mounted() {
+    if (window.navigator.platform.startsWith("Mac")) {
+      this.winShowFrame = true;
+      this.winShowFrameDisabled = true;
+    }
   },
   created() {
     if (window.ipcRenderer) {
@@ -185,11 +191,9 @@ export default {
       })
 
       window.ipcRenderer.on("buildLog", (event, arg) => {
-        this.logs.unshift({ level: arg.level, info: arg.info, id: this.logIndex })
+        this.logs.unshift({level: arg.level, info: arg.info, id: this.logIndex})
         this.logIndex += 1;
       })
-
-
     }
 
   },
@@ -202,14 +206,14 @@ if (require && !window.ipcRenderer) {
 
 </script>
 
-<style >
+<style>
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
+//margin-top: 60px;
 }
 
 .container {
@@ -235,7 +239,7 @@ if (require && !window.ipcRenderer) {
 
 body {
   /* overflow: hidden; */
-
+  margin-top: 0;
 }
 
 .settingItems {
